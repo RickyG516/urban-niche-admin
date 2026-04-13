@@ -1,0 +1,1299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0d0f14">
+<title>UNC Outreach Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+:root {
+  --bg:#0d0f14;--panel:#13161f;--panel2:#181b26;--border:#1e2330;--border2:#252a3a;
+  --mint:#6ee7b7;--mint-dim:#3a8f6a;--mint-bg:#0f3d2a;--mint-glow:rgba(110,231,183,0.15);
+  --blue:#3b82f6;--blue-bg:#1a2040;--purple:#8b5cf6;--purple-bg:#2a1a40;
+  --yellow:#f0c040;--yellow-bg:#3d3200;--red:#f07070;--red-bg:#3d0f0f;
+  --orange:#fb923c;--orange-bg:#3d1f0f;
+  --text:#e8eaf0;--text-dim:#a0a8c0;--text-muted:#5a6080;
+  --font:'DM Sans',-apple-system,sans-serif;--mono:'DM Mono','SF Mono',monospace;
+  --radius:10px;--shadow:0 4px 24px rgba(0,0,0,0.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:#2a2d3a;border-radius:3px}
+a{color:inherit;text-decoration:none}
+
+/* ========= AUTH SCREEN ========= */
+#authScreen {
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse at 20% 50%, #0f2a1e 0%, var(--bg) 60%);
+  padding:20px;
+}
+.auth-box {
+  background:var(--panel);border:1px solid var(--border2);border-radius:16px;
+  padding:40px;width:100%;max-width:400px;box-shadow:var(--shadow);
+  animation:fadeUp .4s ease;
+}
+.auth-logo {
+  font-size:10px;font-weight:800;color:var(--mint);letter-spacing:3px;
+  text-transform:uppercase;margin-bottom:6px;font-family:var(--mono);
+}
+.auth-title{font-size:24px;font-weight:900;color:#fff;margin-bottom:4px}
+.auth-sub{font-size:12px;color:var(--text-muted);font-family:var(--mono);margin-bottom:32px}
+.auth-field{margin-bottom:16px}
+.auth-label{font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;font-family:var(--mono);margin-bottom:6px;display:block}
+.auth-input {
+  width:100%;background:#0d0f14;border:1px solid var(--border);color:var(--text);
+  padding:12px 14px;border-radius:8px;font-family:var(--font);font-size:14px;
+  transition:border-color .15s;outline:none;
+}
+.auth-input:focus{border-color:var(--mint)}
+.auth-btn {
+  width:100%;background:var(--mint);color:#000;border:none;border-radius:8px;
+  padding:13px;font-size:14px;font-weight:800;cursor:pointer;
+  font-family:var(--font);transition:all .15s;margin-top:8px;
+}
+.auth-btn:hover{background:#a7f3d0;transform:translateY(-1px)}
+.auth-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.auth-err{background:var(--red-bg);border:1px solid var(--red);color:var(--red);padding:10px 14px;border-radius:8px;font-size:12px;margin-top:12px;display:none;font-family:var(--mono)}
+
+/* ========= APP LAYOUT ========= */
+#app{display:none;min-height:100vh;flex-direction:column}
+.topbar {
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 20px;border-bottom:1px solid var(--border);
+  background:var(--panel);position:sticky;top:0;z-index:100;
+}
+.topbar-left{display:flex;align-items:center;gap:14px}
+.logo-mark{font-size:10px;font-weight:800;color:var(--mint);letter-spacing:2.5px;text-transform:uppercase;font-family:var(--mono)}
+.app-title{font-size:16px;font-weight:900;color:#fff}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.user-pill {
+  display:flex;align-items:center;gap:8px;background:var(--panel2);
+  border:1px solid var(--border);border-radius:20px;padding:6px 12px;
+}
+.user-pill-name{font-size:11px;font-weight:700;color:var(--text-dim);font-family:var(--mono)}
+.role-badge {
+  font-size:9px;font-weight:800;padding:2px 7px;border-radius:10px;font-family:var(--mono);
+  text-transform:uppercase;letter-spacing:.5px;
+}
+.role-admin{background:var(--mint-bg);color:var(--mint)}
+.role-rep{background:var(--blue-bg);color:var(--blue)}
+.sign-out-btn {
+  background:none;border:1px solid var(--border);color:var(--text-muted);
+  padding:6px 12px;border-radius:8px;font-size:11px;font-weight:700;
+  cursor:pointer;font-family:var(--mono);transition:all .15s;
+}
+.sign-out-btn:hover{border-color:var(--red);color:var(--red)}
+
+.main-layout{display:flex;flex:1}
+
+/* ========= SIDEBAR ========= */
+.sidebar {
+  width:200px;min-width:200px;background:var(--panel);border-right:1px solid var(--border);
+  padding:16px 0;display:flex;flex-direction:column;gap:2px;position:sticky;top:53px;height:calc(100vh - 53px);overflow-y:auto;
+}
+.nav-item {
+  display:flex;align-items:center;gap:10px;padding:10px 16px;
+  font-size:12px;font-weight:700;color:var(--text-muted);cursor:pointer;
+  transition:all .12s;border-left:2px solid transparent;font-family:var(--mono);
+}
+.nav-item:hover{color:var(--text-dim);background:var(--panel2)}
+.nav-item.active{color:var(--mint);background:var(--mint-bg);border-left-color:var(--mint)}
+.nav-icon{font-size:14px;width:18px;text-align:center}
+.nav-section{font-size:9px;font-weight:800;color:var(--text-muted);letter-spacing:2px;text-transform:uppercase;padding:12px 16px 4px;font-family:var(--mono)}
+
+/* ========= CONTENT ========= */
+.content{flex:1;padding:20px;overflow-y:auto;max-width:1400px}
+
+/* ========= KPI ROW ========= */
+.kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:20px}
+.kpi{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:16px 12px;text-align:center;transition:border-color .15s}
+.kpi:hover{border-color:var(--border2)}
+.kpi .n{font-size:28px;font-weight:900;color:var(--mint);line-height:1;font-family:var(--mono)}
+.kpi .l{font-size:10px;color:var(--text-muted);margin-top:6px;text-transform:uppercase;letter-spacing:1px;font-family:var(--mono)}
+
+/* ========= PANELS ========= */
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:16px}
+.panel-title{font-size:11px;font-weight:800;color:var(--mint);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:14px;font-family:var(--mono)}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+
+/* ========= TABLE ========= */
+.sf-bar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center}
+.sf-bar input,.sf-bar select{background:#0d0f14;border:1px solid var(--border);color:var(--text);padding:7px 11px;border-radius:8px;font-family:var(--mono);font-size:12px;outline:none;transition:border-color .15s}
+.sf-bar input{flex:1;min-width:160px}
+.sf-bar input:focus,.sf-bar select:focus{border-color:var(--mint)}
+.sf-bar input::placeholder{color:var(--text-muted)}
+.sf-count{font-size:11px;color:var(--text-muted);font-family:var(--mono);white-space:nowrap}
+table{width:100%;border-collapse:collapse}
+th{font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;padding:8px 10px;text-align:left;border-bottom:1px solid var(--border);font-family:var(--mono)}
+td{padding:10px;font-size:13px;border-bottom:1px solid #1a1d28;vertical-align:middle}
+tbody tr{cursor:pointer;transition:background .1s}
+tbody tr:hover{background:#181b26}
+tr.sel{background:#171d2e}
+.cn{font-weight:700;color:#fff}
+.cl{font-size:11px;color:var(--text-muted);font-family:var(--mono)}
+
+/* ========= BADGES ========= */
+.badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;font-family:var(--mono);white-space:nowrap}
+.b-NEW{background:var(--blue-bg);color:var(--blue)}
+.b-AUDIT_SENT{background:var(--purple-bg);color:var(--purple)}
+.b-DM_1,.b-DM_2,.b-DM_3{background:var(--blue-bg);color:var(--blue)}
+.b-EMAIL_1,.b-EMAIL_2,.b-EMAIL_3,.b-EMAIL_4,.b-EMAIL_5{background:var(--yellow-bg);color:var(--yellow)}
+.b-CALL_1{background:#3a1030;color:#ec4899}
+.b-INTERESTED{background:var(--mint-bg);color:var(--mint)}
+.b-MEETING{background:#0a3a30;color:#14b8a6}
+.b-PROPOSAL{background:#0a3040;color:#22d3ee}
+.b-CLOSED_WON{background:var(--mint-bg);color:var(--mint)}
+.b-CLOSED_LOST{background:var(--red-bg);color:var(--red)}
+.b-NURTURE{background:#1a1a2a;color:var(--text-dim)}
+.ind{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:12px;font-family:var(--mono)}
+.ind-Construction{background:#1a2238;color:#7aa4f0}
+.ind-HVAC{background:#1f2820;color:#6ee7b7}
+.ind-Roofing{background:#2a1f10;color:#f0a040}
+.ind-Exteriors{background:#2a1040;color:#c084fc}
+.ind-Home\ Improvement{background:#2a1a1a;color:#f87171}
+
+/* ========= PROGRESS BAR ========= */
+.pw{display:flex;align-items:center;gap:6px}
+.pb{flex:1;height:5px;background:#1a1d28;border-radius:3px;overflow:hidden}
+.pf{height:100%;border-radius:3px;background:var(--mint);transition:width .3s}
+.pn{font-size:10px;color:var(--text-muted);font-family:var(--mono);min-width:24px;text-align:right}
+
+/* ========= LEAD DETAIL PANEL ========= */
+.dp{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:18px}
+.dh{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;gap:10px;flex-wrap:wrap}
+.dc{font-size:18px;font-weight:900;color:#fff}
+.dm-sub{font-size:11px;color:var(--text-muted);font-family:var(--mono)}
+.hs-btn{display:inline-block;background:#ff7a59;color:#fff;padding:5px 14px;border-radius:6px;font-size:10px;font-weight:800;font-family:var(--mono);cursor:pointer;border:none;transition:background .15s}
+.hs-btn:hover{background:#ff6a45}
+.wl{color:var(--blue);font-size:11px;font-family:var(--mono);word-break:break-all}
+.ph{color:#ec4899;font-size:11px;font-family:var(--mono)}
+.fl{font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-family:var(--mono)}
+.fg{margin-bottom:14px}
+select,textarea{font-family:var(--mono);font-size:12px;width:100%;background:#0d0f14;border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:8px;outline:none;transition:border-color .15s}
+select:focus,textarea:focus{border-color:var(--mint)}
+textarea{resize:vertical;min-height:60px}
+.ci{display:flex;align-items:center;gap:8px;padding:5px 0;cursor:pointer;font-size:12px}
+.ci input{accent-color:var(--mint);width:15px;height:15px;cursor:pointer}
+.ci.done span{text-decoration:line-through;color:var(--text-muted)}
+
+/* ========= ACTION ROW ========= */
+.ar{display:flex;align-items:center;background:#0d0f14;padding:8px 12px;border-radius:8px;margin-bottom:6px;gap:8px;border:1px solid var(--border)}
+.ar-label{font-size:11px;font-weight:600;flex:1;color:var(--text-dim)}
+.cb{background:var(--blue);color:#fff;border:none;border-radius:6px;padding:5px 14px;font-size:10px;font-weight:700;cursor:pointer;font-family:var(--mono);transition:all .15s;white-space:nowrap}
+.cb:hover{background:#2563eb}
+.cb.cp{background:var(--mint);color:#000}
+
+/* ========= SEQUENCES ========= */
+.sc{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:10px;overflow:hidden}
+.sh-seq{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;cursor:pointer;transition:background .12s}
+.sh-seq:hover{background:#181b26}
+.sb-seq{display:none;padding:0 16px 14px}
+.sb-seq.open{display:block;animation:fadeUp .2s ease}
+.sa-seq{font-size:16px;color:var(--text-muted);transition:transform .2s}
+.sa-seq.open{transform:rotate(90deg)}
+.tc2-seq{background:#0d0f14;border:1px solid #1a1d28;border-radius:8px;padding:12px;margin-bottom:8px}
+.tm{font-size:11px;color:var(--text-dim);font-family:var(--mono);line-height:1.6;background:#0a0c10;padding:10px;border-radius:6px;white-space:pre-wrap}
+
+/* ========= COWORK COMMANDS ========= */
+.cmb{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:10px}
+.cmc{background:#0a0c10;border-radius:8px;padding:10px;font-size:10px;font-family:var(--mono);color:var(--text-dim);line-height:1.6;white-space:pre-wrap}
+
+/* ========= SKILL TRACK LEADERBOARD ========= */
+.tier-elite{color:var(--mint)}
+.tier-solid{color:var(--blue)}
+.tier-notice{color:var(--yellow)}
+.tier-perf{color:var(--red)}
+.score-bar-wrap{flex:1;height:6px;background:#1a1d28;border-radius:3px;margin:0 10px;overflow:hidden}
+.score-bar{height:100%;border-radius:3px;transition:width .4s}
+
+/* ========= REP MANAGEMENT (ADMIN) ========= */
+.rep-card{background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:10px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.rep-avatar{width:38px;height:38px;border-radius:50%;background:var(--mint-bg);border:2px solid var(--mint);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:var(--mint);flex-shrink:0;font-family:var(--mono)}
+.rep-info{flex:1}
+.rep-name{font-size:14px;font-weight:800;color:#fff}
+.rep-email{font-size:11px;color:var(--text-muted);font-family:var(--mono)}
+.rep-actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn-sm{padding:5px 12px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;border:none;font-family:var(--mono);transition:all .15s}
+.btn-danger{background:var(--red-bg);color:var(--red);border:1px solid var(--red)}
+.btn-danger:hover{background:var(--red);color:#fff}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-primary:hover{background:#2563eb}
+.btn-ghost{background:none;color:var(--text-muted);border:1px solid var(--border)}
+.btn-ghost:hover{border-color:var(--mint);color:var(--mint)}
+
+/* ========= ACTIVITY FEED ========= */
+.act-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid #1a1d28}
+.act-icon{font-size:14px;width:24px;text-align:center;flex-shrink:0;margin-top:1px}
+.act-body{flex:1}
+.act-text{font-size:12px;color:var(--text-dim);line-height:1.4}
+.act-time{font-size:10px;color:var(--text-muted);font-family:var(--mono);margin-top:2px}
+
+/* ========= MODAL ========= */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)}
+.modal-overlay.open{display:flex}
+.modal{background:var(--panel);border:1px solid var(--border2);border-radius:16px;padding:28px;width:100%;max-width:480px;box-shadow:var(--shadow);animation:fadeUp .25s ease}
+.modal-title{font-size:18px;font-weight:900;color:#fff;margin-bottom:6px}
+.modal-sub{font-size:12px;color:var(--text-muted);font-family:var(--mono);margin-bottom:20px}
+.modal-field{margin-bottom:14px}
+.modal-label{font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;font-family:var(--mono);margin-bottom:6px;display:block}
+.modal-input{width:100%;background:#0d0f14;border:1px solid var(--border);color:var(--text);padding:10px 12px;border-radius:8px;font-family:var(--font);font-size:13px;outline:none;transition:border-color .15s}
+.modal-input:focus{border-color:var(--mint)}
+.modal-actions{display:flex;gap:10px;margin-top:20px;justify-content:flex-end}
+.btn-cancel{background:none;border:1px solid var(--border);color:var(--text-muted);padding:9px 18px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--mono)}
+.btn-confirm{background:var(--mint);color:#000;border:none;padding:9px 18px;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;font-family:var(--font)}
+.btn-confirm:hover{background:#a7f3d0}
+
+/* ========= RESOURCE LINKS ========= */
+.rl{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:6px;text-decoration:none;color:var(--text);transition:border-color .15s}
+.rl:hover{border-color:var(--mint)}
+.nudge{background:#0f1a10;border:1px solid #1a3a22;border-radius:var(--radius);padding:12px 16px;font-size:12px;color:var(--mint);line-height:1.6;margin-top:16px}
+
+/* ========= UTILITY ========= */
+.hidden{display:none!important}
+.loading{text-align:center;padding:40px;color:var(--text-muted);font-family:var(--mono);font-size:12px}
+.empty{text-align:center;padding:40px;color:var(--text-muted);font-size:13px}
+.tab-content{display:none}
+.tab-content.active{display:block;animation:fadeUp .25s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+.no-site{font-size:10px;color:var(--text-muted);font-family:var(--mono);font-style:italic}
+.unassigned-tag{font-size:10px;color:var(--text-muted);font-family:var(--mono);font-style:italic}
+
+@media(max-width:900px){
+  .sidebar{display:none}
+  .kpi-row{grid-template-columns:repeat(2,1fr)}
+  .g2,.g3{grid-template-columns:1fr}
+  table .hm{display:none}
+}
+@media(max-width:600px){
+  .content{padding:12px}
+  .kpi .n{font-size:22px}
+  .topbar{padding:10px 14px}
+}
+</style>
+</head>
+<body>
+
+<!-- ========= AUTH SCREEN ========= -->
+<div id="authScreen">
+  <div class="auth-box">
+    <div class="auth-logo">Urban Niche Co.</div>
+    <div class="auth-title">⚡ Outreach Platform</div>
+    <div class="auth-sub">Sign in to access your pipeline</div>
+    <div class="auth-field">
+      <label class="auth-label">Email</label>
+      <input class="auth-input" type="email" id="authEmail" placeholder="you@example.com" autocomplete="email">
+    </div>
+    <div class="auth-field">
+      <label class="auth-label">Password</label>
+      <input class="auth-input" type="password" id="authPass" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="auth-btn" id="authBtn" onclick="signIn()">Sign In</button>
+    <div class="auth-err" id="authErr"></div>
+  </div>
+</div>
+
+<!-- ========= MAIN APP ========= -->
+<div id="app">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <div>
+        <div class="logo-mark">Urban Niche Co.</div>
+        <div class="app-title">⚡ Outreach Platform</div>
+      </div>
+      <div id="syncStatus" style="font-size:10px;font-family:var(--mono);color:var(--mint);display:none">● LIVE</div>
+    </div>
+    <div class="topbar-right">
+      <div class="user-pill">
+        <span class="user-pill-name" id="userNameDisplay">–</span>
+        <span class="role-badge" id="roleBadge">–</span>
+      </div>
+      <button class="sign-out-btn" onclick="signOut()">Sign Out</button>
+    </div>
+  </div>
+
+  <div class="main-layout">
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="nav-section">Pipeline</div>
+      <div class="nav-item active" onclick="showTab('pipeline')" id="nav-pipeline">
+        <span class="nav-icon">📋</span> Pipeline
+      </div>
+      <div class="nav-item" onclick="showTab('sequences')" id="nav-sequences">
+        <span class="nav-icon">📨</span> Sequences
+      </div>
+      <div class="nav-item" onclick="showTab('cadence')" id="nav-cadence">
+        <span class="nav-icon">📅</span> Cadence
+      </div>
+      <div class="nav-item" onclick="showTab('cowork')" id="nav-cowork">
+        <span class="nav-icon">🤖</span> Cowork
+      </div>
+      <div class="nav-item" onclick="showTab('resources')" id="nav-resources">
+        <span class="nav-icon">📁</span> Resources
+      </div>
+
+      <!-- ADMIN ONLY NAV -->
+      <div id="adminNav" class="hidden">
+        <div class="nav-section">Admin</div>
+        <div class="nav-item" onclick="showTab('admin-reps')" id="nav-admin-reps">
+          <span class="nav-icon">👥</span> Rep Management
+        </div>
+        <div class="nav-item" onclick="showTab('admin-leaderboard')" id="nav-admin-leaderboard">
+          <span class="nav-icon">🏆</span> Leaderboard
+        </div>
+        <div class="nav-item" onclick="showTab('admin-activity')" id="nav-admin-activity">
+          <span class="nav-icon">📡</span> Activity Feed
+        </div>
+        <div class="nav-item" onclick="showTab('admin-pool')" id="nav-admin-pool">
+          <span class="nav-icon">🎯</span> Lead Pool
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content">
+
+      <!-- ===== PIPELINE TAB ===== -->
+      <div class="tab-content active" id="tab-pipeline">
+        <div class="kpi-row">
+          <div class="kpi"><div class="n" id="k-total">–</div><div class="l">My Leads</div></div>
+          <div class="kpi"><div class="n" id="k-cont">–</div><div class="l">Contacted</div></div>
+          <div class="kpi"><div class="n" id="k-int">–</div><div class="l">Interested</div></div>
+          <div class="kpi"><div class="n" id="k-won">–</div><div class="l">Closed Won</div></div>
+          <div class="kpi"><div class="n" id="k-score">–</div><div class="l">Skill Score</div></div>
+        </div>
+        <div class="g2">
+          <div>
+            <div class="panel">
+              <div class="panel-title">📊 Lead Pipeline</div>
+              <div class="sf-bar">
+                <input type="text" id="srch" placeholder="Search company..." oninput="filterLeads()">
+                <select id="indFilter" onchange="filterLeads()">
+                  <option value="">All Industries</option>
+                  <option>Construction</option><option>HVAC</option><option>Roofing</option>
+                  <option>Exteriors</option><option>Home Improvement</option>
+                </select>
+                <select id="stFilter" onchange="filterLeads()">
+                  <option value="">All Stages</option>
+                  <option value="NEW">New Lead</option>
+                  <option value="AUDIT_SENT">Audit Sent</option>
+                  <option value="DM_1">DM #1</option><option value="DM_2">DM #2</option><option value="DM_3">DM #3</option>
+                  <option value="EMAIL_1">Email #1</option>
+                  <option value="CALL_1">Call #1</option>
+                  <option value="INTERESTED">Interested</option>
+                  <option value="CLOSED_WON">Closed Won</option>
+                  <option value="CLOSED_LOST">Closed Lost</option>
+                  <option value="NURTURE">Nurture</option>
+                </select>
+                <span class="sf-count" id="sfCount">– leads</span>
+              </div>
+              <table>
+                <thead><tr>
+                  <th>Company</th>
+                  <th class="hm">Industry</th>
+                  <th class="hm">Stage</th>
+                  <th>Progress</th>
+                </tr></thead>
+                <tbody id="leadTableBody"><tr><td colspan="4" class="loading">Loading leads...</td></tr></tbody>
+              </table>
+            </div>
+            <div class="panel">
+              <div class="panel-title">📈 Pipeline Funnel</div>
+              <div id="funnelView"></div>
+              <div style="margin-top:14px;padding-top:10px;border-top:1px solid #1a1d28">
+                <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;font-family:var(--mono)">Weekly Goals</div>
+                <div style="display:flex;align-items:center;margin-bottom:8px">
+                  <div style="font-size:12px;color:var(--text-dim);width:100px">Contacted</div>
+                  <div style="flex:1;height:5px;background:#1a1d28;border-radius:3px;margin:0 10px;overflow:hidden"><div style="height:100%;border-radius:3px;background:linear-gradient(90deg,var(--mint),var(--blue));transition:width .4s" id="g1"></div></div>
+                  <div style="font-size:11px;color:var(--text-muted);font-family:var(--mono);min-width:40px;text-align:right" id="gn1">0/10</div>
+                </div>
+                <div style="display:flex;align-items:center;margin-bottom:8px">
+                  <div style="font-size:12px;color:var(--text-dim);width:100px">Interested</div>
+                  <div style="flex:1;height:5px;background:#1a1d28;border-radius:3px;margin:0 10px;overflow:hidden"><div style="height:100%;border-radius:3px;background:linear-gradient(90deg,var(--mint),var(--blue));transition:width .4s" id="g2g"></div></div>
+                  <div style="font-size:11px;color:var(--text-muted);font-family:var(--mono);min-width:40px;text-align:right" id="gn2">0/3</div>
+                </div>
+                <div style="display:flex;align-items:center">
+                  <div style="font-size:12px;color:var(--text-dim);width:100px">Closed</div>
+                  <div style="flex:1;height:5px;background:#1a1d28;border-radius:3px;margin:0 10px;overflow:hidden"><div style="height:100%;border-radius:3px;background:linear-gradient(90deg,var(--mint),var(--blue));transition:width .4s" id="g3"></div></div>
+                  <div style="font-size:11px;color:var(--text-muted);font-family:var(--mono);min-width:40px;text-align:right" id="gn3">0/1</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="panel" id="noSel" style="padding:40px;text-align:center">
+              <div style="font-size:32px;margin-bottom:10px">👈</div>
+              <div style="font-size:13px;color:var(--text-muted)">Select a lead to view details</div>
+            </div>
+            <div class="dp hidden" id="detP"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== SEQUENCES TAB ===== -->
+      <div class="tab-content" id="tab-sequences">
+        <div class="sc">
+          <div class="sh-seq" onclick="toggleSeq('dm')">
+            <div><div style="font-size:14px;font-weight:800">💬 Cold Social Media DM Sequence</div><div style="font-size:11px;color:var(--text-muted);font-family:var(--mono)">3-touch · LinkedIn & Facebook</div></div>
+            <span class="sa-seq" id="a-dm">›</span>
+          </div>
+          <div class="sb-seq" id="b-dm"></div>
+        </div>
+        <div class="sc">
+          <div class="sh-seq" onclick="toggleSeq('email')">
+            <div><div style="font-size:14px;font-weight:800">📧 Cold Email Sequence</div><div style="font-size:11px;color:var(--text-muted);font-family:var(--mono)">5-touch · Direct email</div></div>
+            <span class="sa-seq" id="a-email">›</span>
+          </div>
+          <div class="sb-seq" id="b-email"></div>
+        </div>
+        <a class="rl" href="https://docs.google.com/document/d/11uvAalfbxWG7uVcxucdGcCg9kObvoove38dP9KdZybY/edit" target="_blank">
+          <span style="font-size:18px">📞</span>
+          <span style="font-size:12px;font-weight:700;flex:1">Cold Call Scripts + Objection Handlers</span>
+          <span style="color:var(--text-muted)">↗</span>
+        </a>
+      </div>
+
+      <!-- ===== CADENCE TAB ===== -->
+      <div class="tab-content" id="tab-cadence">
+        <div class="g2">
+          <div class="panel">
+            <div class="panel-title">📅 30-Day Cadence — Active Lead</div>
+            <div id="cadV"></div>
+            <div style="margin-top:8px;font-size:11px;color:var(--text-muted);line-height:1.6">Total: <strong style="color:var(--mint)">12 touchpoints</strong> across DM, Email, Phone over 21 days. No response = 90-day monthly nurture.</div>
+          </div>
+          <div>
+            <div class="panel">
+              <div class="panel-title">⚡ Today's Hit List</div>
+              <div id="hlV"></div>
+            </div>
+            <div class="panel">
+              <div class="panel-title">💰 Revenue Targets</div>
+              <div style="margin-bottom:10px">
+                <div style="font-size:10px;color:var(--text-muted);margin-bottom:4px;font-family:var(--mono)">MONTHLY GOAL</div>
+                <div style="font-size:26px;font-weight:900;color:var(--mint)">$5,000</div>
+                <div style="font-size:11px;color:var(--mint-dim)">2–3 clients @ avg $1,500–$2,500/mo</div>
+              </div>
+              <div style="height:1px;background:#1a1d28;margin:10px 0"></div>
+              <div style="font-size:10px;color:var(--text-muted);margin-bottom:6px;font-family:var(--mono)">CONVERSION BENCHMARKS</div>
+              <div style="font-size:12px;color:var(--text-dim);line-height:1.8">
+                20 contacts → ~4 replies (20%)<br>
+                4 replies → ~2 booked calls (50%)<br>
+                2 calls → ~1 close (50%)<br>
+                <span style="color:var(--mint);font-weight:700">= 1 client per 20 contacted</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== COWORK TAB ===== -->
+      <div class="tab-content" id="tab-cowork">
+        <div class="panel-title" style="margin-bottom:4px">🤖 Cowork Command Templates</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:16px;font-family:var(--mono)">Copy into Cowork. Replace [BRACKETS] with lead info.</div>
+        <div id="cwV"></div>
+      </div>
+
+      <!-- ===== RESOURCES TAB ===== -->
+      <div class="tab-content" id="tab-resources">
+        <div class="panel-title" style="margin-bottom:12px">📁 Resources & Quick Links</div>
+        <a class="rl" href="https://docs.google.com/document/d/1CD8r5gjq0rGxbdUHOhzqYZwTyJ8KGsm_K0nVItcCAIg/edit" target="_blank"><span style="font-size:18px">💬</span><span style="font-size:12px;font-weight:700;flex:1">Cold DM Sequence (Full Doc)</span><span style="color:var(--text-muted)">↗</span></a>
+        <a class="rl" href="https://docs.google.com/document/d/1GWkaQXj4jMdO44xyPgUpdccAbCjLZRe35MVerFNIH-o/edit" target="_blank"><span style="font-size:18px">📧</span><span style="font-size:12px;font-weight:700;flex:1">Cold Email Sequence (Full Doc)</span><span style="color:var(--text-muted)">↗</span></a>
+        <a class="rl" href="https://docs.google.com/document/d/11uvAalfbxWG7uVcxucdGcCg9kObvoove38dP9KdZybY/edit" target="_blank"><span style="font-size:18px">📞</span><span style="font-size:12px;font-weight:700;flex:1">Cold Call Scripts + Objection Handlers</span><span style="color:var(--text-muted)">↗</span></a>
+        <div style="background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-top:16px">
+          <div class="panel-title">🎯 The Hook</div>
+          <div style="background:#0a0c10;border-radius:8px;padding:12px;font-family:var(--mono);font-size:13px;line-height:1.6;color:var(--mint);font-style:italic">"I found something on your website that's probably costing you leads. Want me to send it over? Free, no pitch."</div>
+          <div style="margin-top:10px;display:flex;gap:20px;flex-wrap:wrap;font-size:12px;font-family:var(--mono)">
+            <div><span style="color:var(--text-muted)">Rate: </span><strong style="color:var(--mint)">$1,500/mo</strong></div>
+            <div><span style="color:var(--text-muted)">Phone: </span><strong>(515) 344-4053</strong></div>
+          </div>
+        </div>
+        <div class="nudge"><strong>📍 System Reminder:</strong> Your pipeline is 3 channels deep — DM → Email → Phone. Don't rely on one lane. Contractors need 7–12 touchpoints before they respond. Stay in sequence, track every lead.</div>
+      </div>
+
+      <!-- ===== ADMIN: REP MANAGEMENT ===== -->
+      <div class="tab-content" id="tab-admin-reps">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <div class="panel-title" style="margin:0">👥 Rep Management</div>
+          <button class="btn-sm btn-primary" onclick="openAddRepModal()">+ Add Rep</button>
+        </div>
+        <div id="repListContainer"><div class="loading">Loading reps...</div></div>
+      </div>
+
+      <!-- ===== ADMIN: LEADERBOARD ===== -->
+      <div class="tab-content" id="tab-admin-leaderboard">
+        <div class="panel-title" style="margin-bottom:16px">🏆 Skill Track Leaderboard</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px">
+          <div class="kpi"><div class="n" style="color:var(--mint);font-size:18px">80–100</div><div class="l">🟢 Elite</div></div>
+          <div class="kpi"><div class="n" style="color:var(--blue);font-size:18px">60–79</div><div class="l">🔵 Solid</div></div>
+          <div class="kpi"><div class="n" style="color:var(--yellow);font-size:18px">40–59</div><div class="l">🟡 On Notice</div></div>
+          <div class="kpi"><div class="n" style="color:var(--red);font-size:18px">&lt;40</div><div class="l">🔴 Perf Track</div></div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">Weekly Rankings</div>
+          <div id="leaderboardContainer"><div class="loading">Loading scores...</div></div>
+        </div>
+        <div class="panel" style="margin-top:16px">
+          <div class="panel-title">Score Breakdown</div>
+          <div style="font-size:12px;color:var(--text-dim);line-height:2">
+            <div style="display:flex;justify-content:space-between"><span>Activity (touchpoints logged)</span><span style="color:var(--mint);font-weight:700">30 pts</span></div>
+            <div style="display:flex;justify-content:space-between"><span>Conversion (leads moved forward)</span><span style="color:var(--mint);font-weight:700">40 pts</span></div>
+            <div style="display:flex;justify-content:space-between"><span>Speed (avg hours to first touch)</span><span style="color:var(--mint);font-weight:700">15 pts</span></div>
+            <div style="display:flex;justify-content:space-between"><span>Consistency (days active this week)</span><span style="color:var(--mint);font-weight:700">15 pts</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== ADMIN: ACTIVITY FEED ===== -->
+      <div class="tab-content" id="tab-admin-activity">
+        <div class="panel-title" style="margin-bottom:16px">📡 Live Activity Feed</div>
+        <div class="panel">
+          <div id="activityFeedContainer"><div class="loading">Loading activity...</div></div>
+        </div>
+      </div>
+
+      <!-- ===== ADMIN: LEAD POOL ===== -->
+      <div class="tab-content" id="tab-admin-pool">
+        <div class="panel-title" style="margin-bottom:16px">🎯 Unassigned Lead Pool</div>
+        <div id="poolContainer"><div class="loading">Loading unassigned leads...</div></div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main-layout -->
+</div><!-- /app -->
+
+<!-- ===== ADD REP MODAL ===== -->
+<div class="modal-overlay" id="addRepModal">
+  <div class="modal">
+    <div class="modal-title">Add New Rep</div>
+    <div class="modal-sub">They'll receive an email to set their password.</div>
+    <div class="modal-field">
+      <label class="modal-label">Full Name</label>
+      <input class="modal-input" type="text" id="newRepName" placeholder="Jane Smith">
+    </div>
+    <div class="modal-field">
+      <label class="modal-label">Email</label>
+      <input class="modal-input" type="email" id="newRepEmail" placeholder="jane@example.com">
+    </div>
+    <div class="modal-field">
+      <label class="modal-label">Temp Password</label>
+      <input class="modal-input" type="text" id="newRepPass" placeholder="TempPass123!">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('addRepModal')">Cancel</button>
+      <button class="btn-confirm" onclick="createRep()">Create Rep</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ASSIGN LEAD MODAL ===== -->
+<div class="modal-overlay" id="assignModal">
+  <div class="modal">
+    <div class="modal-title">Assign Lead</div>
+    <div class="modal-sub" id="assignModalSub">Assign this lead to a rep.</div>
+    <div class="modal-field">
+      <label class="modal-label">Select Rep</label>
+      <select class="modal-input" id="assignRepSelect"></select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('assignModal')">Cancel</button>
+      <button class="btn-confirm" onclick="confirmAssign()">Assign</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// CONFIG
+// ============================================================
+const SUPABASE_URL = 'https://mfizpcfnaaprrlweownc.supabase.co';
+// ⚠️ PASTE YOUR FULL ANON KEY HERE (from Supabase → Settings → API → Legacy anon key)
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1maXpwY2ZuYWFwcnJsd2Vvd25jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxMTc0ODMsImV4cCI6MjA5MTY5MzQ4M30.LDjo1MZqU_Kg_RnvBr7U6NLLSHuCi0YDebJunvKePvs';
+const HP_PORTAL = '245833525';
+const HB = `https://app.hubspot.com/contacts/${HP_PORTAL}/record/0-2`;
+
+const { createClient } = window.supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+// ============================================================
+// STATE
+// ============================================================
+let currentUser = null;
+let currentRole = null;
+let allLeads = [];
+let allReps = [];
+let selLeadId = null;
+let assigningLeadId = null;
+
+// ============================================================
+// AUTH
+// ============================================================
+async function signIn() {
+  const email = document.getElementById('authEmail').value.trim();
+  const pass = document.getElementById('authPass').value;
+  const btn = document.getElementById('authBtn');
+  const err = document.getElementById('authErr');
+  err.style.display = 'none';
+  if (!email || !pass) { showErr('Please enter email and password.'); return; }
+  btn.disabled = true; btn.textContent = 'Signing in...';
+  
+  // Sign out any existing session first
+  await sb.auth.signOut();
+  
+  const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+  if (error) { showErr(error.message); btn.disabled = false; btn.textContent = 'Sign In'; return; }
+  await initApp(data.user);
+}
+
+function showErr(msg) {
+  const err = document.getElementById('authErr');
+  err.textContent = msg; err.style.display = 'block';
+}
+
+async function signOut() {
+  await sb.auth.signOut();
+  currentUser = null; currentRole = null; allLeads = [];
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('authScreen').style.display = 'flex';
+}
+
+// ============================================================
+// APP INIT
+// ============================================================
+async function initApp(user) {
+  currentUser = user;
+
+  // ADMIN EMAILS — always get admin regardless of anything else
+  const ADMIN_EMAILS = ['ricky.garnerfgc@gmail.com'];
+  const isAdmin = ADMIN_EMAILS.includes(user.email.toLowerCase());
+  currentRole = isAdmin ? 'admin' : 'rep';
+
+  // Upsert profile with correct role
+  await sb.from('users').upsert({
+    id: user.id,
+    email: user.email,
+    full_name: user.user_metadata?.full_name || user.email.split("@")[0],
+    role: currentRole,
+    is_active: true,
+    last_active_at: new Date().toISOString()
+  }, { onConflict: 'id' });
+
+  // Show app
+  document.getElementById('authScreen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  document.getElementById('app').style.flexDirection = 'column';
+
+  // Set user display
+  const displayName = profile?.full_name || user.email.split('@')[0];
+  document.getElementById('userNameDisplay').textContent = displayName;
+  const rb = document.getElementById('roleBadge');
+  rb.textContent = currentRole.toUpperCase();
+  rb.className = 'role-badge role-' + currentRole;
+
+  // Show admin nav
+  if (currentRole === 'admin') {
+    document.getElementById('adminNav').classList.remove('hidden');
+  }
+
+  // Load data
+  await loadLeads();
+  initStaticContent();
+  renderCadence();
+  renderHitList();
+  renderCowork();
+  document.getElementById('syncStatus').style.display = 'block';
+}
+
+// Always show login screen on load — no auto session restore
+window.addEventListener('DOMContentLoaded', async () => {
+  await sb.auth.signOut();
+  document.getElementById('authScreen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+});
+
+// ============================================================
+// LEADS
+// ============================================================
+async function loadLeads() {
+  document.getElementById('leadTableBody').innerHTML = '<tr><td colspan="4" class="loading">Connecting to database...</td></tr>';
+  const { data, error } = await sb.from('leads')
+    .select('*')
+    .eq('is_deleted', false)
+    .order('company');
+  if (error) {
+    console.error('Leads error:', error);
+    document.getElementById('leadTableBody').innerHTML = '<tr><td colspan="4" style="color:var(--red);padding:20px;font-family:var(--mono);font-size:11px">Error: ' + error.message + '</td></tr>';
+    return;
+  }
+  allLeads = data || [];
+  renderLeadTable();
+  renderKPIs();
+  renderFunnel();
+}
+
+function getStageProgress(status) {
+  const stages = ['NEW','AUDIT_SENT','DM_1','DM_2','DM_3','EMAIL_1','EMAIL_2','CALL_1','INTERESTED','MEETING','PROPOSAL','CLOSED_WON'];
+  const idx = stages.indexOf(status);
+  return idx < 0 ? 0 : Math.round((idx / (stages.length - 1)) * 100);
+}
+
+function getFilteredLeads() {
+  const q = (document.getElementById('srch')?.value || '').toLowerCase();
+  const ind = document.getElementById('indFilter')?.value || '';
+  const st = document.getElementById('stFilter')?.value || '';
+  return allLeads.filter(l =>
+    (!q || l.company.toLowerCase().includes(q)) &&
+    (!ind || l.industry === ind) &&
+    (!st || l.status === st)
+  );
+}
+
+function renderLeadTable() {
+  const leads = getFilteredLeads();
+  const tb = document.getElementById('leadTableBody');
+  document.getElementById('sfCount').textContent = leads.length + ' leads';
+  if (!leads.length) { tb.innerHTML = '<tr><td colspan="4" class="empty">No leads found</td></tr>'; return; }
+  tb.innerHTML = leads.map(l => {
+    const prog = getStageProgress(l.status);
+    const assigned = l.assigned_to ? '' : '<span class="unassigned-tag">unassigned</span>';
+    return `<tr onclick="selLead('${l.id}')" class="${selLeadId===l.id?'sel':''}">
+      <td><div class="cn">${l.company}</div><div class="cl">${l.city}, ${l.state} ${assigned}</div></td>
+      <td class="hm"><span class="ind ind-${l.industry}">${l.industry}</span></td>
+      <td class="hm"><span class="badge b-${l.status}">${l.status.replace(/_/g,' ')}</span></td>
+      <td><div class="pw"><div class="pb"><div class="pf" style="width:${prog}%"></div></div><div class="pn">${prog}%</div></div></td>
+    </tr>`;
+  }).join('');
+}
+
+function filterLeads() { renderLeadTable(); }
+
+function renderKPIs() {
+  const leads = allLeads;
+  const contacted = leads.filter(l => l.status !== 'NEW').length;
+  const interested = leads.filter(l => ['INTERESTED','MEETING','PROPOSAL'].includes(l.status)).length;
+  const won = leads.filter(l => l.status === 'CLOSED_WON').length;
+  document.getElementById('k-total').textContent = leads.length;
+  document.getElementById('k-cont').textContent = contacted;
+  document.getElementById('k-int').textContent = interested;
+  document.getElementById('k-won').textContent = won;
+  document.getElementById('k-score').textContent = '–';
+
+  // Weekly goal bars
+  const c10 = Math.min(100, (contacted/10)*100);
+  const i3 = Math.min(100, (interested/3)*100);
+  const w1 = Math.min(100, won*100);
+  document.getElementById('g1').style.width = c10+'%';
+  document.getElementById('g2g').style.width = i3+'%';
+  document.getElementById('g3').style.width = w1+'%';
+  document.getElementById('gn1').textContent = contacted+'/10';
+  document.getElementById('gn2').textContent = interested+'/3';
+  document.getElementById('gn3').textContent = won+'/1';
+}
+
+function renderFunnel() {
+  const stages = [
+    {k:'NEW',l:'New Lead'},{k:'AUDIT_SENT',l:'Audit Sent'},{k:'DM_1',l:'DM Sent'},
+    {k:'INTERESTED',l:'Interested'},{k:'PROPOSAL',l:'Proposal'},{k:'CLOSED_WON',l:'Won'}
+  ];
+  const total = allLeads.length || 1;
+  document.getElementById('funnelView').innerHTML = stages.map(s => {
+    const cnt = allLeads.filter(l => l.status === s.k).length;
+    const pct = Math.round((cnt/total)*100);
+    return `<div style="display:flex;align-items:center;margin-bottom:7px">
+      <div style="font-size:11px;color:var(--text-dim);width:100px;font-family:var(--mono)">${s.l}</div>
+      <div style="flex:1;height:5px;background:#1a1d28;border-radius:3px;margin:0 10px;overflow:hidden">
+        <div style="height:100%;border-radius:3px;background:linear-gradient(90deg,var(--mint),var(--blue));width:${pct}%;transition:width .4s"></div>
+      </div>
+      <div style="font-size:11px;color:var(--text-muted);font-family:var(--mono);min-width:40px;text-align:right">${cnt}</div>
+    </div>`;
+  }).join('');
+}
+
+// ============================================================
+// LEAD DETAIL
+// ============================================================
+function selLead(id) {
+  selLeadId = selLeadId === id ? null : id;
+  renderLeadTable();
+  renderDetail();
+}
+
+function renderDetail() {
+  const noSel = document.getElementById('noSel');
+  const det = document.getElementById('detP');
+  if (!selLeadId) { noSel.classList.remove('hidden'); det.classList.add('hidden'); return; }
+  const l = allLeads.find(x => x.id === selLeadId);
+  if (!l) return;
+  noSel.classList.add('hidden'); det.classList.remove('hidden');
+
+  const stageOpts = ['NEW','AUDIT_SENT','DM_1','DM_2','DM_3','EMAIL_1','EMAIL_2','EMAIL_3','EMAIL_4','EMAIL_5','CALL_1','INTERESTED','MEETING','PROPOSAL','CLOSED_WON','CLOSED_LOST','NURTURE']
+    .map(s => `<option value="${s}" ${l.status===s?'selected':''}>${s.replace(/_/g,' ')}</option>`).join('');
+
+  const ck = l.checklist || {};
+  const checks = [
+    {k:'audit',l:'✅ Quick Win Audit Run'},{k:'dm1',l:'💬 DM #1 Sent'},{k:'dm2',l:'💬 DM #2 Sent'},
+    {k:'dm3',l:'💬 DM #3 Sent'},{k:'email1',l:'📧 Email #1 Sent'},{k:'email2',l:'📧 Email #2 Sent'},{k:'call1',l:'📞 Cold Call #1'}
+  ];
+
+  const websiteHtml = l.website
+    ? `<a class="wl" href="${l.website}" target="_blank" style="display:block;margin-bottom:4px">${l.website} ↗</a>`
+    : `<span class="no-site">No website found — use cold call / FB DM</span>`;
+  const phoneHtml = l.phone
+    ? `<a class="ph" href="tel:${l.phone}" style="display:block;margin-bottom:12px">📞 ${l.phone}</a>` : '';
+
+  // Admin gets assign button
+  const assignBtn = currentRole === 'admin'
+    ? `<button class="btn-sm btn-ghost" onclick="openAssignModal('${l.id}','${l.company.replace(/'/g,"\\'")}')">Assign Rep</button>` : '';
+
+  det.innerHTML = `
+    <div class="dh">
+      <div>
+        <div class="dc">${l.company}</div>
+        <div class="dm-sub">${l.city}, ${l.state} · ${l.industry} · ID: ${l.id}</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${assignBtn}
+        <a class="hs-btn" href="${HB}/${l.id}" target="_blank">HUBSPOT ↗</a>
+      </div>
+    </div>
+    <div style="margin-bottom:12px">${websiteHtml}${phoneHtml}</div>
+    <div class="fg"><div class="fl">Pipeline Stage</div>
+      <select onchange="updateStage('${l.id}',this.value)">${stageOpts}</select>
+    </div>
+    <div class="fg"><div class="fl">Outreach Checklist</div>
+      ${checks.map(c => `<label class="ci ${ck[c.k]?'done':''}">
+        <input type="checkbox" ${ck[c.k]?'checked':''} onchange="toggleCheck('${l.id}','${c.k}')">
+        <span>${c.l}</span></label>`).join('')}
+    </div>
+    <div class="fg"><div class="fl">Cowork Quick Actions</div>
+      <div class="ar"><span class="ar-label">⚡ Quick Win Audit</span><button class="cb" onclick="copyCmd(this,'audit','${l.id}')">COPY</button></div>
+      <div class="ar"><span class="ar-label">🔍 Full Site Audit (9-file package)</span><button class="cb" onclick="copyCmd(this,'fullaudit','${l.id}')">COPY</button></div>
+      <div class="ar"><span class="ar-label">💬 Draft DM (Touch 1)</span><button class="cb" onclick="copyCmd(this,'dm','${l.id}')">COPY</button></div>
+      <div class="ar"><span class="ar-label">📧 Draft Email (Email 1)</span><button class="cb" onclick="copyCmd(this,'email','${l.id}')">COPY</button></div>
+      <div class="ar"><span class="ar-label">📞 Cold Call Script</span><button class="cb" onclick="copyCmd(this,'call','${l.id}')">COPY</button></div>
+    </div>
+    <div class="fg"><div class="fl">Notes</div>
+      <textarea placeholder="Add notes..." oninput="updateNotes('${l.id}',this.value)">${l.notes||''}</textarea>
+    </div>`;
+}
+
+// ============================================================
+// LEAD UPDATES
+// ============================================================
+async function updateStage(id, status) {
+  const { error } = await sb.from('leads').update({ status }).eq('id', id);
+  if (!error) {
+    const l = allLeads.find(x => x.id === id);
+    if (l) l.status = status;
+    await logActivity(id, 'stage_change', `Stage updated to ${status}`);
+    renderKPIs(); renderFunnel(); renderLeadTable();
+  }
+}
+
+let notesTimer = {};
+function updateNotes(id, notes) {
+  clearTimeout(notesTimer[id]);
+  notesTimer[id] = setTimeout(async () => {
+    await sb.from('leads').update({ notes }).eq('id', id);
+    const l = allLeads.find(x => x.id === id);
+    if (l) l.notes = notes;
+  }, 800);
+}
+
+async function toggleCheck(id, key) {
+  const l = allLeads.find(x => x.id === id);
+  if (!l) return;
+  l.checklist = { ...l.checklist, [key]: !l.checklist[key] };
+  await sb.from('leads').update({ checklist: l.checklist }).eq('id', id);
+  await logActivity(id, 'checklist', `${key} marked ${l.checklist[key] ? 'complete' : 'incomplete'}`);
+  renderDetail();
+}
+
+async function logActivity(leadId, action, detail) {
+  await sb.from('activity_log').insert({
+    lead_id: leadId, user_id: currentUser.id, action, detail
+  });
+}
+
+// ============================================================
+// COPY COMMANDS
+// ============================================================
+function copyCmd(btn, type, id) {
+  const l = allLeads.find(x => x.id === id);
+  if (!l) return;
+  const site = l.website || '[NO WEBSITE — use cold call or FB DM]';
+  let cmd = '';
+
+  if (type === 'audit') {
+    cmd = `Run a Quick Win Audit on ${site} for ${l.company} in Dubuque, Iowa (${l.industry}).
+Find the single biggest issue costing them leads. 
+Output: one punchy finding + free fix tip.
+Format as a cold DM-ready insight using the Urban Niche Co. quick win format.
+Hook line: "I found something on your website that's probably costing you leads. Want me to send it over? Free, no pitch."`;
+  }
+  else if (type === 'fullaudit') {
+    cmd = `Run a Full Website Audit for ${l.company} — ${site} — Dubuque, Iowa (${l.industry}).
+This is the Urban Niche Co. 9-file warm lead pitch package.
+Deliverables: Internal Brief, Client Report Card, Homepage Mockup, Pitch Deck, Proposal with Dream Roadmap, Pitch Script, Facebook Activity Skin, Instagram Activity Skin, Master Index.
+Save all files to Google Drive under Clients/${l.company}.
+Do not break existing visual layout or styling on any existing files.`;
+  }
+  else if (type === 'dm') {
+    cmd = `Draft a personalized cold DM — Touch 1 — for [CONTACT NAME] at ${l.company} (${l.industry}, Dubuque Iowa).
+Use the Urban Niche Co. 3-touch DM sequence format.
+Touch 1 is THE HOOK — keep it short, no pitch, just curiosity.
+Reference their specific business. Use this exact hook: "I found something on your website that's probably costing you leads. Want me to send it over? Free, no pitch."
+Sign off as Ricky, Urban Niche Co.
+Reference doc: https://docs.google.com/document/d/1CD8r5gjq0rGxbdUHOhzqYZwTyJ8KGsm_K0nVItcCAIg/edit`;
+  }
+  else if (type === 'email') {
+    cmd = `Draft a personalized cold email — Email 1 — for [CONTACT NAME] at ${l.company} (${l.industry}, Dubuque Iowa).
+Subject line: "Found something on your site — quick heads up"
+Keep it short, value-first, no pitch. 3 paragraphs max.
+Sign off as Ricky Garcia, Urban Niche Co. | urbannicheco.com | (515) 344-4053
+Reference doc: https://docs.google.com/document/d/1GWkaQXj4jMdO44xyPgUpdccAbCjLZRe35MVerFNIH-o/edit`;
+  }
+  else if (type === 'call') {
+    cmd = `Pull the 30-second cold call opener for ${l.company} (${l.industry}).
+Personalize it for a ${l.industry.toLowerCase()} contractor in Dubuque, Iowa.
+Include the 3 most common objections and word-for-word rebuttals.
+Reference doc: https://docs.google.com/document/d/11uvAalfbxWG7uVcxucdGcCg9kObvoove38dP9KdZybY/edit`;
+  }
+
+  navigator.clipboard.writeText(cmd);
+  btn.textContent = 'COPIED ✓'; btn.classList.add('cp');
+  setTimeout(() => { btn.textContent = 'COPY'; btn.classList.remove('cp'); }, 1800);
+  logActivity(id, 'cowork_copy', `Copied ${type} command`);
+}
+
+function ctCopy(btn, text) {
+  navigator.clipboard.writeText(text);
+  btn.textContent = 'COPIED ✓'; btn.classList.add('cp');
+  setTimeout(() => { btn.textContent = 'COPY'; btn.classList.remove('cp'); }, 1800);
+}
+
+// ============================================================
+// TAB NAVIGATION
+// ============================================================
+function showTab(tab) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const el = document.getElementById('tab-' + tab);
+  const nav = document.getElementById('nav-' + tab);
+  if (el) el.classList.add('active');
+  if (nav) nav.classList.add('active');
+
+  // Lazy load admin tabs
+  if (tab === 'admin-reps') loadReps();
+  if (tab === 'admin-leaderboard') loadLeaderboard();
+  if (tab === 'admin-activity') loadActivityFeed();
+  if (tab === 'admin-pool') loadLeadPool();
+}
+
+// ============================================================
+// ADMIN: REP MANAGEMENT
+// ============================================================
+async function loadReps() {
+  const { data } = await sb.from('users').select('*').order('full_name');
+  allReps = data || [];
+  const container = document.getElementById('repListContainer');
+  if (!allReps.length) { container.innerHTML = '<div class="empty">No reps yet. Add your first rep.</div>'; return; }
+  container.innerHTML = allReps.map(r => {
+    const initials = (r.full_name || r.email).split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+    const statusColor = r.is_active ? 'var(--mint)' : 'var(--red)';
+    return `<div class="rep-card">
+      <div class="rep-avatar">${initials}</div>
+      <div class="rep-info">
+        <div class="rep-name">${r.full_name || '–'}</div>
+        <div class="rep-email">${r.email} · <span style="color:${statusColor}">${r.is_active?'Active':'Suspended'}</span></div>
+      </div>
+      <div class="rep-actions">
+        <button class="btn-sm btn-ghost" onclick="openAssignToRep('${r.id}')">Assign Leads</button>
+        ${r.is_active
+          ? `<button class="btn-sm btn-danger" onclick="suspendRep('${r.id}')">Suspend</button>`
+          : `<button class="btn-sm btn-primary" onclick="reactivateRep('${r.id}')">Reactivate</button>`
+        }
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function createRep() {
+  const name = document.getElementById('newRepName').value.trim();
+  const email = document.getElementById('newRepEmail').value.trim();
+  const pass = document.getElementById('newRepPass').value.trim();
+  if (!name || !email || !pass) { alert('All fields required.'); return; }
+
+  // Note: In production, use Supabase Admin API to create users server-side.
+  // For now we use signUp (works with email confirm off)
+  const { data, error } = await sb.auth.signUp({ email, password: pass, options: { data: { full_name: name } } });
+  if (error) { alert('Error: ' + error.message); return; }
+  if (data.user) {
+    await sb.from('users').upsert({ id: data.user.id, email, full_name: name, role: 'rep' });
+  }
+  closeModal('addRepModal');
+  loadReps();
+}
+
+async function suspendRep(id) {
+  if (!confirm('Suspend this rep? They will lose access immediately.')) return;
+  await sb.from('users').update({ is_active: false, suspended_at: new Date().toISOString() }).eq('id', id);
+  await sb.from('flags').insert({ user_id: id, flag_type: 'zero_activity_14d', detail: 'Admin manually suspended' });
+  loadReps();
+}
+
+async function reactivateRep(id) {
+  await sb.from('users').update({ is_active: true, suspended_at: null }).eq('id', id);
+  loadReps();
+}
+
+// ============================================================
+// ADMIN: LEAD ASSIGNMENT
+// ============================================================
+function openAssignModal(leadId, company) {
+  assigningLeadId = leadId;
+  document.getElementById('assignModalSub').textContent = `Assign "${company}" to a rep.`;
+  const sel = document.getElementById('assignRepSelect');
+  sel.innerHTML = '<option value="">— Unassigned —</option>' +
+    allReps.map(r => `<option value="${r.id}">${r.full_name || r.email}</option>`).join('');
+  // Pre-select current
+  const l = allLeads.find(x => x.id === leadId);
+  if (l?.assigned_to) sel.value = l.assigned_to;
+  document.getElementById('assignModal').classList.add('open');
+}
+
+async function confirmAssign() {
+  const repId = document.getElementById('assignRepSelect').value || null;
+  if (!assigningLeadId) return;
+  const { error } = await sb.from('leads').update({ assigned_to: repId }).eq('id', assigningLeadId);
+  if (!error) {
+    const l = allLeads.find(x => x.id === assigningLeadId);
+    if (l) l.assigned_to = repId;
+    await logActivity(assigningLeadId, 'assigned', `Lead assigned to rep ${repId || 'none'}`);
+    renderDetail(); renderLeadTable();
+  }
+  closeModal('assignModal');
+}
+
+// ============================================================
+// ADMIN: LEADERBOARD
+// ============================================================
+async function loadLeaderboard() {
+  const { data: metrics } = await sb.from('rep_metrics').select('*, users(full_name, email)').order('total_score', { ascending: false });
+  const container = document.getElementById('leaderboardContainer');
+  if (!metrics?.length) { container.innerHTML = '<div class="empty">No scores yet. Scores calculate weekly based on rep activity.</div>'; return; }
+  const tierColor = { 'Elite':'var(--mint)','Solid':'var(--blue)','On Notice':'var(--yellow)','Performance Track':'var(--red)' };
+  container.innerHTML = metrics.map((m, i) => {
+    const name = m.users?.full_name || m.users?.email || 'Unknown';
+    const color = tierColor[m.tier] || 'var(--text-muted)';
+    return `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #1a1d28">
+      <div style="font-size:18px;font-weight:900;color:var(--text-muted);width:24px;text-align:center">${i+1}</div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:700;color:#fff">${name}</div>
+        <div style="font-size:10px;color:${color};font-family:var(--mono);font-weight:700">${m.tier}</div>
+      </div>
+      <div class="score-bar-wrap"><div class="score-bar" style="width:${m.total_score}%;background:${color}"></div></div>
+      <div style="font-size:18px;font-weight:900;color:${color};font-family:var(--mono);min-width:36px;text-align:right">${m.total_score}</div>
+    </div>`;
+  }).join('');
+}
+
+// ============================================================
+// ADMIN: ACTIVITY FEED
+// ============================================================
+async function loadActivityFeed() {
+  const { data } = await sb.from('activity_log')
+    .select('*, users(full_name, email), leads(company)')
+    .order('created_at', { ascending: false })
+    .limit(50);
+  const container = document.getElementById('activityFeedContainer');
+  if (!data?.length) { container.innerHTML = '<div class="empty">No activity logged yet.</div>'; return; }
+  const icons = { stage_change:'📊', checklist:'✅', cowork_copy:'🤖', assigned:'👤', note:'📝' };
+  container.innerHTML = data.map(a => {
+    const who = a.users?.full_name || a.users?.email || 'Unknown';
+    const company = a.leads?.company || a.lead_id;
+    const icon = icons[a.action] || '⚡';
+    const time = new Date(a.created_at).toLocaleString('en-US', { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' });
+    return `<div class="act-item">
+      <div class="act-icon">${icon}</div>
+      <div class="act-body">
+        <div class="act-text"><strong>${who}</strong> — ${a.detail || a.action} <span style="color:var(--text-muted)">on ${company}</span></div>
+        <div class="act-time">${time}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ============================================================
+// ADMIN: LEAD POOL
+// ============================================================
+async function loadLeadPool() {
+  const unassigned = allLeads.filter(l => !l.assigned_to && !l.is_deleted);
+  const container = document.getElementById('poolContainer');
+  if (!unassigned.length) { container.innerHTML = '<div class="empty">All leads are assigned. ✅</div>'; return; }
+  
+  if (!allReps.length) await loadReps();
+  
+  container.innerHTML = `
+    <div class="panel">
+      <div class="panel-title">${unassigned.length} Unassigned Leads</div>
+      <table><thead><tr><th>Company</th><th>Industry</th><th>Stage</th><th>Action</th></tr></thead>
+      <tbody>${unassigned.map(l => `<tr>
+        <td><div class="cn">${l.company}</div><div class="cl">${l.city}, ${l.state}</div></td>
+        <td><span class="ind ind-${l.industry}">${l.industry}</span></td>
+        <td><span class="badge b-${l.status}">${l.status.replace(/_/g,' ')}</span></td>
+        <td><button class="btn-sm btn-primary" onclick="openAssignModal('${l.id}','${l.company.replace(/'/g,"\\'")}')">Assign</button></td>
+      </tr>`).join('')}</tbody></table>
+    </div>`;
+}
+
+// ============================================================
+// MODAL HELPERS
+// ============================================================
+function openAddRepModal() { document.getElementById('addRepModal').classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(m => m.addEventListener('click', e => { if(e.target===m) m.classList.remove('open'); }));
+
+// ============================================================
+// STATIC CONTENT — DM SEQUENCES
+// ============================================================
+const DMS = [
+  { t:1, n:'The Hook', d:'Day 1', m:`Hey [First Name] 👋\n\nI was checking out [Company Name]'s website and noticed something that's probably costing you leads.\n\nI wrote it up — want me to send it over? Free, no pitch.\n\n– Ricky | Urban Niche Co.` },
+  { t:2, n:'The Follow-Up', d:'Day 4', m:`Hey [First Name] — just circling back on my last message.\n\nI know you're busy running the business, so I'll keep it quick.\n\nI found one specific thing on your site that contractors in Dubuque are missing that their competitors are capitalizing on. Takes about 10 minutes to fix.\n\nWant me to send it? No cost.\n\n– Ricky` },
+  { t:3, n:'The Last Touch', d:'Day 10', m:`Hey [First Name] — last one from me, I promise.\n\nI've been helping contractors in Dubuque get more leads online. Quick website fix = more calls.\n\nIf the timing is off, no worries at all. I'll check back in a few months.\n\nEither way — good luck with the season. 🙌\n\n– Ricky | Urban Niche Co. | (515) 344-4053` }
+];
+
+const EMS = [
+  { t:1, s:'Found something on your site — quick heads up', d:'Day 2' },
+  { t:2, s:'Re: your website (one quick thing)', d:'Day 5' },
+  { t:3, s:'Still thinking about this for [Company]', d:'Day 9' },
+  { t:4, s:'Last note from me on this', d:'Day 14' },
+  { t:5, s:'Checking in — [Company] + Urban Niche Co.', d:'Day 21' }
+];
+
+const CAD = [
+  {d:'Day 1',i:'💬',t:'Send DM #1 — The Hook'},{d:'Day 2',i:'📧',t:'Send Email #1 — Found something on your site'},
+  {d:'Day 4',i:'💬',t:'DM #2 — The Follow-Up'},{d:'Day 5',i:'📧',t:'Email #2 — Re: your website'},
+  {d:'Day 7',i:'📞',t:'Cold Call #1 — 30 second opener'},{d:'Day 9',i:'📧',t:'Email #3 — Still thinking about this'},
+  {d:'Day 10',i:'💬',t:'DM #3 — Last Touch'},{d:'Day 12',i:'📞',t:'Cold Call #2 — Voicemail if no answer'},
+  {d:'Day 14',i:'📧',t:'Email #4 — Last note from me'},{d:'Day 17',i:'📞',t:'Cold Call #3 — Final call'},
+  {d:'Day 21',i:'📧',t:'Email #5 — Checking in'},{d:'Day 30+',i:'🔄',t:'Move to 90-day nurture sequence'}
+];
+
+const HL = [
+  'Run a Quick Win Audit on every NEW lead before first DM',
+  'Reach out to all INTERESTED leads — they need a follow-up TODAY',
+  'Check for any leads on Day 4 or Day 7 — run the cadence',
+  'Update pipeline stages after every touchpoint',
+  'Log all calls, DMs, and emails in the checklist'
+];
+
+const CW = [
+  { t:'Quick Win Audit', d:'Cold outreach opener — 1 finding, 1 fix', c:`Run a Quick Win Audit for [COMPANY NAME] at [WEBSITE URL].
+Industry: [TRADE TYPE] | Location: Dubuque, Iowa
+
+Find the single biggest issue costing them leads.
+Output: one punchy finding + free fix tip.
+Format as a cold DM-ready insight.
+Hook: "I found something on your website that's probably costing you leads. Want me to send it over? Free, no pitch."` },
+  { t:'Full Site Audit (9-File Package)', d:'Warm lead pitch package — run after first response', c:`Run a Full Website Audit for [COMPANY NAME] — [WEBSITE URL]
+Industry: [TRADE TYPE] | Location: Dubuque, Iowa
+
+Urban Niche Co. 9-file pitch package:
+1. Internal Brief
+2. Client Report Card
+3. Homepage Mockup
+4. Pitch Deck
+5. Proposal with Dream Roadmap
+6. Pitch Script
+7. Facebook Activity Skin
+8. Instagram Activity Skin
+9. Master Index
+
+Save all to Google Drive under Clients/[COMPANY NAME]
+Do not break existing visual layout or styling.` },
+  { t:'Draft Cold DM — Touch 1', d:'The Hook — first outreach', c:`Draft a personalized cold DM Touch 1 for [CONTACT NAME] at [COMPANY NAME].
+Industry: [TRADE TYPE] | City: Dubuque, Iowa
+
+Use Urban Niche Co. DM sequence format — Touch 1 is THE HOOK.
+Short, no pitch, curiosity-based.
+Hook: "I found something on your website that's probably costing you leads. Want me to send it over? Free, no pitch."
+Sign off as Ricky, Urban Niche Co.
+Reference: https://docs.google.com/document/d/1CD8r5gjq0rGxbdUHOhzqYZwTyJ8KGsm_K0nVItcCAIg/edit` },
+  { t:'Draft Cold Email — Email 1', d:'Value-first, no pitch, under 150 words', c:`Draft personalized cold email Email 1 for [CONTACT NAME] at [COMPANY NAME].
+Industry: [TRADE TYPE] | City: Dubuque, Iowa
+
+Subject: "Found something on your site — quick heads up"
+Short, value-first, no pitch. 3 paragraphs max.
+Sign off: Ricky Garcia | Urban Niche Co. | urbannicheco.com | (515) 344-4053
+Reference: https://docs.google.com/document/d/1GWkaQXj4jMdO44xyPgUpdccAbCjLZRe35MVerFNIH-o/edit` },
+  { t:'Cold Call Script', d:'30-second opener + 3 objection handlers', c:`Pull cold call opener for [COMPANY NAME] ([TRADE TYPE], Dubuque Iowa).
+Personalize for a ${''} contractor. Include:
+- 30-second opening script
+- 3 most common objections with word-for-word rebuttals
+Reference: https://docs.google.com/document/d/11uvAalfbxWG7uVcxucdGcCg9kObvoove38dP9KdZybY/edit` }
+];
+
+function toggleSeq(k) {
+  document.getElementById('b-'+k).classList.toggle('open');
+  document.getElementById('a-'+k).classList.toggle('open');
+}
+
+function initStaticContent() {
+  document.getElementById('b-dm').innerHTML = DMS.map(d => `
+    <div class="tc2-seq">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px">
+        <div style="display:flex;align-items:center;gap:8px"><span class="badge b-DM_1">Touch ${d.t}</span><strong style="font-size:13px">${d.n}</strong></div>
+        <div style="display:flex;align-items:center;gap:8px"><span style="font-size:10px;color:var(--text-muted);font-family:var(--mono)">${d.d}</span>
+          <button class="cb" onclick="ctCopy(this,${JSON.stringify(d.m)})">COPY</button></div>
+      </div>
+      <div class="tm">${d.m}</div>
+    </div>`).join('') + `<a class="rl" style="margin-top:8px" href="https://docs.google.com/document/d/1CD8r5gjq0rGxbdUHOhzqYZwTyJ8KGsm_K0nVItcCAIg/edit" target="_blank"><span style="font-size:18px">📄</span><span style="font-size:12px;font-weight:700;flex:1">Open Full DM Sequence Doc</span><span style="color:var(--text-muted)">↗</span></a>`;
+
+  document.getElementById('b-email').innerHTML = EMS.map(e => `
+    <div style="display:flex;justify-content:space-between;align-items:center;background:#0d0f14;border:1px solid #1a1d28;border-radius:8px;padding:10px 12px;margin-bottom:6px;flex-wrap:wrap;gap:6px">
+      <div style="display:flex;align-items:center;gap:8px"><span class="badge b-EMAIL_1">Email ${e.t}</span><span style="font-size:12px;font-weight:600">${e.s}</span></div>
+      <span style="font-size:10px;color:var(--text-muted);font-family:var(--mono)">${e.d}</span>
+    </div>`).join('') + `<a class="rl" style="margin-top:8px" href="https://docs.google.com/document/d/1GWkaQXj4jMdO44xyPgUpdccAbCjLZRe35MVerFNIH-o/edit" target="_blank"><span style="font-size:18px">📄</span><span style="font-size:12px;font-weight:700;flex:1">Open Full Email Sequence Doc</span><span style="color:var(--text-muted)">↗</span></a>`;
+
+  document.getElementById('cadV').innerHTML = CAD.map(c =>
+    `<div style="display:flex;align-items:center;background:#0d0f14;border-radius:8px;padding:8px 12px;border:1px solid #1a1d28;margin-bottom:6px;gap:10px">
+      <div style="font-size:11px;color:var(--text-muted);width:55px;font-family:var(--mono);font-weight:500">${c.d}</div>
+      <div style="font-size:14px;margin-right:4px">${c.i}</div>
+      <div style="font-size:12px;color:var(--text-dim);flex:1">${c.t}</div>
+    </div>`).join('');
+
+  document.getElementById('hlV').innerHTML = HL.map(h =>
+    `<div style="display:flex;align-items:flex-start;padding:7px 0;border-bottom:1px solid #1a1d28;font-size:12px;color:var(--text-dim)">
+      <span style="color:var(--mint);margin-right:8px;font-weight:700;flex-shrink:0">→</span>${h}
+    </div>`).join('');
+
+  document.getElementById('cwV').innerHTML = CW.map(c =>
+    `<div class="cmb">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+        <div><div style="font-size:13px;font-weight:800">${c.t}</div><div style="font-size:10px;color:var(--text-muted);font-family:var(--mono)">${c.d}</div></div>
+        <button class="cb" onclick="ctCopy(this,${JSON.stringify(c.c)})">COPY</button>
+      </div>
+      <div class="cmc">${c.c}</div>
+    </div>`).join('');
+}
+
+function renderCadence() {}
+function renderHitList() {}
+function renderCowork() {}
+
+// Auth on enter key
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('authScreen').style.display !== 'none') signIn();
+});
+</script>
+</body>
+</html>
